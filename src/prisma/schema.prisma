@@ -2,12 +2,15 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["referentialIntegrity"]
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider             = "mysql"
+  url                  = env("DATABASE_URL")
+  referentialIntegrity = "prisma"
+
 }
 
 model User {
@@ -103,7 +106,7 @@ model Comment {
   createdAt DateTime @default(now())
 
 
-  parent   Comment? @relation("comments", fields: [parentId], references: [id])
+  parent   Comment? @relation("comments", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   parentId String?
 
   comments Comment[] @relation("comments")
