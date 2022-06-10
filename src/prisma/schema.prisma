@@ -1,0 +1,129 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String             @id @default(uuid())
+  username      String             @unique
+  firstName     String
+  lastName      String
+  password      String
+  refreshTokens UserRefreshToken[]
+  posts         Post[]
+  subReddits    SubRedditMember[]
+  comments      Comment[]
+  postVotes     PostVote[]
+}
+
+model UserRefreshToken {
+  id       String   @id @default(uuid())
+  token    String   @db.Text
+  device   String?
+  ip       String?
+  lastUsed DateTime @default(now())
+  browser  String?
+  os       String?
+  platform String?
+  source   String?
+  user     User?    @relation(fields: [userId], references: [id])
+  userId   String
+}
+
+model SubReddit {
+  id          String            @id @default(uuid())
+  name        String            @unique
+  description String?           @db.Text
+  type        SubRedditType
+  nsfw        Boolean
+  members     Int
+  createdAt   DateTime          @default(now())
+  redditors   SubRedditMember[]
+  posts       Post[]
+}
+
+model SubRedditMember {
+  id String @id @default(uuid())
+
+  user   User?  @relation(fields: [userId], references: [id])
+  userId String
+
+  subReddit   SubReddit @relation(fields: [subRedditId], references: [id])
+  subRedditId String
+}
+
+enum SubRedditType {
+  public
+  private
+  restricted
+}
+
+model Post {
+  id String @id @default(uuid())
+
+  title   String
+  content String? @db.Text
+
+  upVotes      Int
+  downVotes    Int
+  commentCount Int
+
+  createdAt DateTime @default(now())
+
+  subReddit   SubReddit @relation(fields: [subRedditId], references: [id])
+  subRedditId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  comments Comment[]
+  postVote PostVote[]
+}
+
+model Comment {
+  id String @id @default(uuid())
+
+  post   Post   @relation(fields: [postId], references: [id])
+  postId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  content   String
+  upVotes   Int
+  downVotes Int
+
+  createdAt DateTime @default(now())
+
+
+  parent   Comment? @relation("comments", fields: [parentId], references: [id])
+  parentId String?
+
+  comments Comment[] @relation("comments")
+}
+
+model PostVote {
+  id String @id @default(uuid())
+
+  post   Post?  @relation(fields: [postId], references: [id])
+  postId String
+
+  user   User?  @relation(fields: [userId], references: [id])
+  userId String
+
+  vote Vote
+
+  lastVote Vote
+}
+
+enum Vote {
+  upVote
+  downVote
+}
